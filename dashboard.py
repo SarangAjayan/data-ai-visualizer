@@ -90,29 +90,35 @@ if uploaded_file:
     st.markdown("---")
     st.header("🧠 GPT-Powered Business Insights")
 
-    if st.button("📌 Generate AI Insights"):
-        with st.spinner("Analyzing with ChatGPT..."):
-            try:
-                sample = df_clean.sample(min(50, len(df_clean)))
-                prompt = f"""
-                You are a data analyst. Provide a brief summary of the dataset below, insights about key trends or patterns, potential issues, and suggestions a company can act on.
+    from openai import OpenAI  # Add this to your imports at the top
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-                Dataset (first few rows):
-                {sample.to_csv(index=False)}
-                """
-                response = openai.ChatCompletion.create(
-                    model="gpt-4",
-                    messages=[
-                        {"role": "system", "content": "You are a professional data analyst."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.7
-                )
-                insight_text = response.choices[0].message.content
-                st.success("Insights generated successfully!")
-                st.markdown(insight_text)
-            except Exception as e:
-                st.error(f"Failed to generate insights: {e}")
+if st.button("📌 Generate AI Insights"):
+    with st.spinner("Analyzing with ChatGPT..."):
+        try:
+            sample = df_clean.sample(min(50, len(df_clean)))
+            prompt = f"""
+            You are a data analyst. Provide a brief summary of the dataset below, insights about key trends or patterns, potential issues, and suggestions a company can act on.
+
+            Dataset (first few rows):
+            {sample.to_csv(index=False)}
+            """
+
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a professional data analyst."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7
+            )
+
+            insight_text = response.choices[0].message.content
+            st.success("Insights generated successfully!")
+            st.markdown(insight_text)
+        except Exception as e:
+            st.error(f"Failed to generate insights: {e}")
+
 
     st.markdown("---")
     st.download_button("📤 Download Cleaned Data as CSV", df_clean.to_csv(index=False), "cleaned_data.csv", "text/csv")
