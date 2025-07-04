@@ -2,14 +2,14 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import random
-import openai
+from openai import OpenAI
 from cleaning_module import clean_data
 
 st.set_page_config(page_title="📊 Auto-Insight AI Dashboard", layout="wide")
 st.title("📊 AI Data Insight Dashboard")
 st.markdown("Upload your dataset to get automatic insights in a Power BI-style visual layout.")
 
-openai.api_key = st.secrets["OPENAI_API_KEY"]  # Store your OpenAI API key in Streamlit secrets
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
@@ -54,15 +54,21 @@ if uploaded_file:
     if regenerate or 'regenerate_count' not in st.session_state:
         st.session_state.regenerate_count = st.session_state.get('regenerate_count', 0) + 1
 
-    num_charts = st.slider("How many charts to generate?", 1, 9, 6)
+    num_charts = st.slider("How many charts to generate?", 1, 15, 10)
     chart_types = ["Line", "Bar", "Scatter", "Box", "Histogram", "Pie", "Heatmap"]
 
-    chart_cols = st.columns(3)
+    chart_cols = st.columns(5)
 
     for i in range(num_charts):
-        with chart_cols[i % 3]:
-            x = random.choice(all_cols)
-            y = random.choice(numeric_cols) if numeric_cols else x
+        with chart_cols[i % 5]:
+            attempts = 0
+            while attempts < 5:
+                x = random.choice(all_cols)
+                y = random.choice(numeric_cols) if numeric_cols else x
+                if x != y:
+                    break
+                attempts += 1
+
             chart_type = random.choice(chart_types)
             fig = None
 
