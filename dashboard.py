@@ -83,7 +83,7 @@ if uploaded_file:
                 fig = px.density_heatmap(df_clean, x=x, y=y, title=f"Heatmap: {x} vs {y}")
 
             if fig:
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key=f"plot_{i}")
 
     st.markdown("---")
     st.download_button("📤 Download Cleaned Data as CSV", df_clean.to_csv(index=False), "cleaned_data.csv", "text/csv")
