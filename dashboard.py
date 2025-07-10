@@ -16,15 +16,23 @@ uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
     st.subheader("📄 Raw Data")
-    st.dataframe(df.head())
+    st.dataframe(df)
 
     # Clean data
     df_clean = clean_data(df)
     st.subheader("🧹 Cleaned Data")
-    st.dataframe(df_clean.head())
+    st.dataframe(df_clean)
+
+    # Toggle to include/exclude sensitive columns
+    show_sensitive = st.toggle("Include sensitive columns (e.g., names, contacts, emails) in chart axes", value=True)
+
+    if show_sensitive:
+        all_cols = df_clean.columns.tolist()
+    else:
+        exclude_keywords = ["name", "contact", "email", "phone"]
+        all_cols = [col for col in df_clean.columns if not any(kw in col.lower() for kw in exclude_keywords)]
 
     numeric_cols = df_clean.select_dtypes(include=['int64', 'float64']).columns.tolist()
-    all_cols = df_clean.columns.tolist()
 
     st.markdown("---")
     st.header("🔍 Auto Data Filters")
@@ -96,20 +104,16 @@ if uploaded_file:
     st.markdown("---")
     st.header("🧠 GPT-Powered Business Insights")
 
-    from openai import OpenAI  # Add this to your imports at the top
-    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-    
     if st.button("📌 Generate AI Insights"):
         with st.spinner("Analyzing with ChatGPT..."):
             try:
                 sample = df_clean.sample(min(50, len(df_clean)))
                 prompt = f"""
                 You are a data analyst. Provide a brief summary of the dataset below, insights about key trends or patterns, potential issues, and suggestions a company can act on.
-    
+
                 Dataset (first few rows):
                 {sample.to_csv(index=False)}
                 """
-    
                 response = client.chat.completions.create(
                     model="gpt-4",
                     messages=[
@@ -118,15 +122,12 @@ if uploaded_file:
                     ],
                     temperature=0.7
                 )
-    
                 insight_text = response.choices[0].message.content
                 st.success("Insights generated successfully!")
                 st.markdown(insight_text)
             except Exception as e:
                 st.error(f"Failed to generate insights: {e}")
 
-
     st.markdown("---")
     st.download_button("📤 Download Cleaned Data as CSV", df_clean.to_csv(index=False), "cleaned_data.csv", "text/csv")
     st.caption("Built with ❤️ using Streamlit, Plotly, and GPT")
-
