@@ -14,7 +14,7 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
 if uploaded_file:
-    df = pd.read_csv(uploaded_file)
+    df = pd.read_csv(uploaded_file, header=0)  # Ensure first row is used as column headers
     st.subheader("📄 Raw Data")
     st.dataframe(df)
 
